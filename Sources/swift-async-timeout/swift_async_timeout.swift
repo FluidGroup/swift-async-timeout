@@ -3,8 +3,23 @@ public enum TimeoutHandlerError: Error {
   case timeoutOccured
 }
 
-@_unsafeInheritExecutor
+@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public func withTimeout<Return: Sendable>(
+  isolation: isolated (any Actor)? = #isolation,
+  for duration: ContinuousClock.Instant.Duration,
+  @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
+) async throws -> Return {
+  let components = duration.components
+  return try await withTimeout(
+    isolation: isolation,
+    nanoseconds: UInt64(components.seconds) * UInt64(1.0E+9)
+      + UInt64(Double(components.attoseconds) * 1.0E-9),
+    operation
+  )
+}
+
+public func withTimeout<Return: Sendable>(
+  isolation: isolated (any Actor)? = #isolation,
   nanoseconds: UInt64,
   @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
 ) async throws -> Return {
