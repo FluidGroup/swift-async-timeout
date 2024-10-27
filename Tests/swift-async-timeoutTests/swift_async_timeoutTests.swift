@@ -2,7 +2,17 @@ import XCTest
 
 @testable import swift_async_timeout
 
+@MainActor
+func runUI() {}
+
 final class swift_async_timeoutTests: XCTestCase {
+  
+  @MainActor
+  func test_execution() async throws {
+    try await withTimeout(nanoseconds: 2_000_000_000) {
+      runUI()
+    }    
+  }
 
   func test_succeeded_on_time() async throws {
 

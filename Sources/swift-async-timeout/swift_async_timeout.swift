@@ -30,7 +30,7 @@ public func withTimeout<Return: Sendable>(
 
 private func withTimeout<Return: Sendable>(
   isolation: isolated (any Actor)? = #isolation,
-  sleep: @escaping () async throws -> Void,
+  sleep: @escaping @isolated(any) () async throws -> Void,
   @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
 ) async throws -> Return {
 
