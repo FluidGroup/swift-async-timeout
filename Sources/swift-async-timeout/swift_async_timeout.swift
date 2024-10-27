@@ -3,9 +3,34 @@ public enum TimeoutHandlerError: Error {
   case timeoutOccured
 }
 
-@_unsafeInheritExecutor
+@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public func withTimeout<Return: Sendable>(
+  isolation: isolated (any Actor)? = #isolation,
+  for duration: ContinuousClock.Instant.Duration,
+  @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
+) async throws -> Return {
+  return try await withTimeout(
+    isolation: isolation,
+    sleep: { try await Task.sleep(for: duration) },
+    operation
+  )
+}
+
+public func withTimeout<Return: Sendable>(
+  isolation: isolated (any Actor)? = #isolation,
   nanoseconds: UInt64,
+  @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
+) async throws -> Return {
+  return try await withTimeout(
+    isolation: isolation,
+    sleep: { try await Task.sleep(nanoseconds: nanoseconds) },
+    operation
+  )
+}
+
+private func withTimeout<Return: Sendable>(
+  isolation: isolated (any Actor)? = #isolation,
+  sleep: @escaping () async throws -> Void,
   @_inheritActorContext _ operation: @escaping @Sendable () async throws -> Return
 ) async throws -> Return {
 
@@ -44,7 +69,7 @@ public func withTimeout<Return: Sendable>(
       task.value = _task
 
       let _timeoutTask = Task {
-        try await Task.sleep(nanoseconds: nanoseconds)
+        try await sleep()
         _task.cancel()
 
         await flag.performIf(expected: false) {
